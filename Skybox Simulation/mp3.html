@@ -1,0 +1,205 @@
+
+<!-- @file Main HTML File for MP3 -->
+<!-- @author Kevin Xia <kevinx3@illinois.edu> -->
+
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title> CS 418 MP3 </title>
+<meta charset="utf-8">
+</head>
+
+<!-- Vertex Shader Script For Teapot -->
+<script id="teapot-vs" type="x-shader/x-vertex">
+  // MP2 Starter //
+  attribute vec3 aVertexNormal;
+  attribute vec3 aVertexPosition;
+ 
+  uniform mat4 uMVMatrix;
+  uniform mat4 uPMatrix;
+  uniform mat3 uNMatrix;
+  
+  varying vec3 vNormal;
+  varying vec3 vPosition;
+  
+  // New Shader Variables //
+  varying vec3 R;
+  varying vec3 T;
+  uniform mat4 uinverseMatrix;
+  uniform int shader_select;
+  vec3 eyePos;
+  vec3 N;
+
+  void main(void) {
+    // Get the vertex position in eye coordinates //
+    vec4 vertexPositionEye4 = uMVMatrix * vec4(aVertexPosition, 1.0);
+    vPosition = vertexPositionEye4.xyz / vertexPositionEye4.w;
+
+    // Calculate the Normal //
+    vNormal = normalize(uNMatrix * aVertexNormal);
+
+    // Referenced Environment Mapping Lecture //
+    eyePos = normalize(mat3(uinverseMatrix) * vPosition); 
+    N = normalize(mat3(uinverseMatrix) * vNormal);
+    
+        // Send to the Fragment Shader //
+    gl_Position = uPMatrix*uMVMatrix*vec4(aVertexPosition, 1.0);
+    
+    // Shader Select Being 2 = Use Reflection //
+    if (shader_select == 2) {
+      R = reflect(eyePos, N); // store into R so I can pass into my frag shader later
+    } 
+    // Shader Select Being 3 = Use Refraction //
+    else if (shader_select == 3) {
+      T = refract(eyePos, N, 1.1); // store into T so I can pass into my frag shader later
+    }
+  }
+</script>
+
+<!-- Fragment Shader Script For Teapot -->
+<script id="teapot-fs" type="x-shader/x-fragment">
+
+  precision mediump float;  
+  uniform vec3 uLightPosition;
+  uniform vec3 uAmbientLightColor;
+  uniform vec3 uDiffuseLightColor;
+  uniform vec3 uSpecularLightColor;
+  uniform vec3 uKAmbient;
+  uniform vec3 ushaderDiffuse;
+  uniform vec3 uKSpecular;
+  uniform float uShininess;
+  varying vec3 vNormal; 
+  varying vec3 vPosition;
+
+  // New Shader Variables //
+  precision highp int; //make an int so I can use shader_select
+  uniform int shader_select;
+  uniform samplerCube RefMap;
+  varying vec3 R;
+  varying vec3 T;
+  
+  void main(void) {
+      // Phong Shader Calculations //
+      // Calculate the vector (l) to the light source
+      vec3 vectorToLightSource = normalize(uLightPosition - vPosition);
+
+      // Calculate n dot l for diffuse lighting
+      float diffuseLightWeightning = max(dot(vNormal,
+                                     vectorToLightSource), 0.0);
+
+      // Calculate the reflection vector (r) that is needed for specular light
+      vec3 reflectionVector = normalize(reflect(-vectorToLightSource,
+                                        vNormal));
+
+      // The camera in eye coordinates is located in the origin and is pointing
+      // along the negative z-axis. Calculate viewVector (v)
+      // in eye coordinates as:
+      // (0.0, 0.0, 0.0) - vPosition
+      vec3 viewVectorEye = -normalize(vPosition);
+
+
+      float rdotv = max(dot(reflectionVector, viewVectorEye), 0.0);
+
+      float specularLightWeightning = pow(rdotv, uShininess);
+
+
+    // Sum up all three reflection components //
+    gl_FragColor = vec4(((uAmbientLightColor*uKAmbient)
+                + (uDiffuseLightColor*ushaderDiffuse) * diffuseLightWeightning
+                + ((uSpecularLightColor*uKSpecular) * specularLightWeightning)),1.0);
+    
+    // Shader Select Being 2 = Use Reflection //
+    if (shader_select == 2) {
+      // Referenced Environment Mapping Lecture //
+      gl_FragColor = textureCube(RefMap, R);
+    } 
+    // Shader Select Being 3 = Use Refraction //
+    if (shader_select == 3){
+      // Referenced Environment Mapping Lecture //
+      gl_FragColor = mix(textureCube(RefMap, T), vec4(1,1,1,1), 0.3);
+    }
+ }
+</script>
+
+<!-- Vertex Shader Script For CubeMap -->
+<script id="cubemap-vs" type="x-shader/x-vertex">
+    attribute vec3 aVertexNormal;
+    attribute vec3 aVertexPosition;
+
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    uniform mat3 uNMatrix;
+
+    varying vec3 vNormal;
+    varying vec3 vPosition;
+
+  void main(void) {
+    // No Need for Phong Shading Here //
+    vNormal = normalize(aVertexPosition.xyz);
+    gl_Position = uPMatrix*uMVMatrix*vec4(aVertexPosition, 1.0);
+  }
+</script>
+
+<!-- Fragment Shader Script For CubeMap -->
+<script id="cubemap-fs" type="x-shader/x-fragment">
+    precision mediump float;
+    uniform vec3 uLightPosition;
+    uniform vec3 uAmbientLightColor;
+    uniform vec3 uDiffuseLightColor;
+    uniform vec3 uSpecularLightColor;
+    uniform vec3 uKAmbient;
+    uniform vec3 ushaderDiffuse;
+    uniform vec3 uKSpecular;
+    uniform float uShininess;
+    varying vec3 vNormal;
+    varying vec3 vPosition;
+    varying vec3 shaderDiffuse;
+
+    uniform samplerCube RefMap;
+    
+  void main(void) {
+    // No Need for Phong Shading Here //
+    gl_FragColor = textureCube(RefMap, vNormal);
+  }
+  </script>
+    
+<script src="gl-matrix-min.js"></script>
+<script src="webgl-utils.js"></script>
+<script src="TriMesh.js"></script>
+<script src="CubeMap.js"></script>
+<script src="mp3.js"></script>
+<body onload="startup();">
+<canvas id="myGLCanvas" width="800" height="800"></canvas>
+    
+
+<!-- Rendering Buttons -->
+    <form id="input_form">
+    <fieldset>
+        <legend>Rendering Parameters</legend>
+     <input type="radio" name="primitive" id="wireframe" value="wireframe"> Wireframe
+     <input type="radio" name="primitive" id="polygon" id="polygon" value="polygon" checked> Polygon
+     <input type="radio" name="primitive" id="wirepoly" value="wirepoly" > Polygon with Edges
+    </fieldset>
+    </form>
+        
+        <fieldset>
+    <legend> Switch Cubemap </legend>
+    <input type="radio" name="mode" id="default" value="default" onclick = "changeCube()" checked> London (Default)
+    <input type="radio" name="mode" id="custom" value="custom" onclick = "changeCube()" > Personal CubeMap
+  </fieldset>
+    
+      <fieldset>
+    <legend> Teapot Options</legend>
+    <input type="radio" name="mode" id="phong" value="phong"> Phong Shading
+    <input type="radio" name="mode" id="reflective" value="reflective" checked> Reflective Shading
+    <input type="radio" name="mode" id="refractive" value="refractive"> Refractive Shading
+  </fieldset>
+     <!-- Movement Instructions -->
+  <fieldset>
+      <legend>Movement Instructions</legend>
+      <div>A (Orbit Teapot Left) | D (Orbit Teapot Right) |  W (Orbit Teapot Up) | S (Orbit Teapot Down) </div>
+    </fieldset>
+
+</body>
+
+</html>

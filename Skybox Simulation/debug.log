@@ -1,0 +1,7 @@
+[1124/164951.629:ERROR:directory_reader_win.cc(43)] FindFirstFile: The system cannot find the path specified. (0x3)
+[1125/164953.197:ERROR:directory_reader_win.cc(43)] FindFirstFile: The system cannot find the path specified. (0x3)
+[1126/160225.698:ERROR:directory_reader_win.cc(43)] FindFirstFile: The system cannot find the path specified. (0x3)
+[1127/160225.714:ERROR:directory_reader_win.cc(43)] FindFirstFile: The system cannot find the path specified. (0x3)
+[1128/032154.949:ERROR:directory_reader_win.cc(43)] FindFirstFile: The system cannot find the path specified. (0x3)
+[1128/043809.219:ERROR:filesystem_win.cc(129)] GetFileAttributes C:\Users\Kevin\AppData\Roaming\Brackets\live-dev-profile\Crashpad\attachments\9ccb4943-7377-45e5-a459-47585cea826e: The system cannot find the path specified. (0x3)
+[1128/235658.133:ERROR:directory_reader_win.cc(43)] FindFirstFile: The system cannot find the path specified. (0x3)

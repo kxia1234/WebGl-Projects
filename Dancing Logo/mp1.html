@@ -1,0 +1,50 @@
+<!-- Given Code https://github.com/illinois-cs418/illinois-cs418.github.io/blob/master/Examples/HelloAnimation.html -->
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+  <title>MP1 Animation</title>
+<meta charset="utf-8">
+</head>
+
+<script id="shader-vs" type="x-shader/x-vertex">
+
+attribute vec3 aVertexPosition;
+attribute vec4 aVertexColor;
+uniform mat4 uMvMatrix;
+varying vec4 vColor;
+
+void main(void) {
+    gl_Position = uMvMatrix*vec4(aVertexPosition, 1.0);
+    vColor = aVertexColor;
+}
+</script>
+
+<script id="shader-fs" type="x-shader/x-fragment">
+
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+
+varying vec4 vColor;
+void main(void) {
+        gl_FragColor = vColor;
+ }
+</script>
+
+<!-- Radio Button Decleration -->
+<input type="radio" id="radio-1" name="notaswitch-one" value="0" checked onclick = "switch_anim(0);">
+<label for="radio-six">Normal Animation</label>
+<input type="radio" id="radio-2" name="notaswitch-one" value="1" onclick = "switch_anim(1);">
+<label for="radio-seven">Creative Animation (Piece of Paper Flying)</label>
+
+<!-- Given Code https://github.com/illinois-cs418/illinois-cs418.github.io/blob/master/Examples/HelloAnimation.html -->
+<script src="gl-matrix-min.js"></script>
+<script type="text/javascript" src="webgl-utils.js"></script>
+<script src="mp1.js"></script>
+<body onload="startup();">
+  <canvas id="myGLCanvas" width="500" height="500"></canvas>
+</body>
+
+</html>
